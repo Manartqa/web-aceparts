@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand: #07254a;
+  --color-brand-deep: #031630;
+  --color-brand-soft: #e8eef6;
+  --color-accent: #e8a33d;
+  --color-ink: #1a1a1a;
+  --color-muted: #5b6573;
+  --font-sans: var(--font-raleway);
+  --font-display: var(--font-titillium);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-muted);
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
