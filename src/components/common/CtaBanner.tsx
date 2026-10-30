@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { company } from "@/content/site";
 
-export default function HomeCta() {
+export default function CtaBanner() {
   return (
     <section className="px-4 pb-24 sm:px-6">
       <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] px-6 py-20 text-center sm:px-12 lg:py-28">

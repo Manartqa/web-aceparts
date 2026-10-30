@@ -1,6 +1,6 @@
+import { CtaBanner } from "@/components/common";
 import {
   HomeAbout,
-  HomeCta,
   HomeHero,
   HomePartners,
   HomeProducts,
@@ -15,7 +15,7 @@ export default function HomePage() {
       <HomeProducts />
       <HomeServices />
       <HomePartners />
-      <HomeCta />
+      <CtaBanner />
     </>
   );
 }
