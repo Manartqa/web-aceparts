@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { SectionHeading } from "@/components/common";
+import SectionHeading from "./SectionHeading";
 import { partners } from "@/content";
 
-export default function HomePartners() {
+export default function PartnersSection() {
   return (
     <section className="py-24 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ContactList } from "@/components/common";
 import { company, services } from "@/content";
 
 export default function SiteFooter() {
@@ -13,20 +14,9 @@ export default function SiteFooter() {
 
         <div>
           <h2 className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-white">Contacts</h2>
-          <ul className="mt-5 space-y-4 text-sm">
-            <li className="flex gap-3">
-              <Icon path="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-              <span>{company.address}</span>
-            </li>
-            <li className="flex gap-3">
-              <Icon path="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" />
-              <a href={`tel:${company.phone}`} className="hover:text-accent">{company.phone}</a>
-            </li>
-            <li className="flex gap-3">
-              <Icon path="M4 6h16v12H4zM4 7l8 6 8-6" />
-              <a href={`mailto:${company.email}`} className="break-all hover:text-accent">{company.email}</a>
-            </li>
-          </ul>
+          <div className="mt-5">
+            <ContactList />
+          </div>
         </div>
 
         <div>
@@ -56,12 +46,4 @@ export default function SiteFooter() {
 async function CopyrightYear() {
   "use cache";
   return new Date().getFullYear();
-}
-
-function Icon({ path }: { path: string }) {
-  return (
-    <svg className="mt-0.5 size-5 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
-      <path d={path} />
-    </svg>
-  );
 }

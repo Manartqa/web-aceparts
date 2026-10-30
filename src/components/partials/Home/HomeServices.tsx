@@ -13,7 +13,7 @@ export default function HomeServices() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeading eyebrow="To keep your journey on track" title="Quality maintenance services" light />
           <Link
-            href={services[0].href}
+            href="/our-services/"
             className="rounded-full border border-white/40 px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-brand"
           >
             All services

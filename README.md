@@ -34,11 +34,12 @@ CI (`.github/workflows/ci.yml`) runs `lint` and `build` on every push and pull r
 ```
 src/
 ├── app/                  # Routes (App Router)
-├── content/site.ts       # All site content: company info, nav, products, services, partners
+├── content/              # All site content: site, products, services, pages (import from "@/content")
 ├── components/
 │   ├── layout/           # SiteHeader, SiteFooter
-│   ├── common/           # Shared: PageHero, Breadcrumb, SectionHeading, ProductCard, ServiceCard, CtaBanner
-│   └── partials/Home/    # Homepage sections
+│   ├── common/           # Shared: PageHero, Breadcrumb, SectionHeading, ProductCard, ServiceCard,
+│   │                     #         CtaBanner, PartnersSection, ContactList
+│   └── partials/         # Page sections: Home, About, Products, Services, Client, Contact
 public/images/            # Images migrated from the WordPress site
 ```
 
@@ -46,7 +47,9 @@ Imports use the `@/` alias (maps to `src/`).
 
 ## Editing content
 
-Text, links and image paths live in `src/content/site.ts`. Images go in `public/images/`.
+Text, links and image paths live in `src/content/`. Images go in `public/images/`.
+Product and service detail pages are generated from `products.ts` and `services.ts`,
+so adding an entry there adds the page.
 
 ## URLs
 
