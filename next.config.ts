@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
     ];
   },
   /* config options here */
+  // Self-contained server for the Docker image (see Dockerfile).
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   // Match the WordPress URL style (/about-us/) so existing links keep working.

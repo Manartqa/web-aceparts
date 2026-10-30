@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Raleway, Titillium_Web } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/layout";
 import { company } from "@/content";
-import { defaultOpenGraph, siteUrl } from "@/lib/seo";
+import { defaultOpenGraph, noindex, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const raleway = Raleway({
@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   },
   description: company.statement,
   openGraph: defaultOpenGraph,
+  ...(noindex && { robots: { index: false, follow: false } }),
   twitter: { card: "summary_large_image" },
 };
 

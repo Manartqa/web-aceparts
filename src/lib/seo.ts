@@ -6,6 +6,9 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://aceparts.co
 
 export const absoluteUrl = (path: string) => `${siteUrl}${path}`;
 
+// Staging builds set NEXT_PUBLIC_NOINDEX=1 so search engines skip them.
+export const noindex = process.env.NEXT_PUBLIC_NOINDEX === "1";
+
 const defaultImage = "/images/hero/1.jpg";
 
 // A page's openGraph replaces the layout's rather than merging, so every page repeats these.

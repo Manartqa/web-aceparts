@@ -32,6 +32,11 @@ Open http://localhost:3000.
 CI (`.github/workflows/ci.yml`) runs `lint` and `build`, and the Playwright suite, on every
 push to `main` and every pull request.
 
+## Deployment
+
+Docker image behind nginx on a VM, built with `scripts/deploy.ps1`. Steps,
+rollback and the go-live checklist are in [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Testing
 
 `e2e/` holds Playwright tests that build the site and run it with `next start` on port 3100:
