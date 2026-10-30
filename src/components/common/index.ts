@@ -7,3 +7,4 @@ export { default as ContactList } from "./ContactList";
 export { default as Breadcrumb } from "./Breadcrumb";
 export type { Crumb } from "./Breadcrumb";
 export { default as PageHero } from "./PageHero";
+export { default as JsonLd } from "./JsonLd";

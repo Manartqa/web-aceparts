@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Raleway, Titillium_Web } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/layout";
 import { company } from "@/content";
+import { defaultOpenGraph, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const raleway = Raleway({
@@ -16,8 +17,14 @@ const titillium = Titillium_Web({
 });
 
 export const metadata: Metadata = {
-  title: `${company.name} – ${company.tagline}`,
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: `${company.name} – ${company.tagline}`,
+    template: `%s – ${company.name}`,
+  },
   description: company.statement,
+  openGraph: defaultOpenGraph,
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

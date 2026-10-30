@@ -76,3 +76,14 @@ Routes keep the WordPress URLs, including the trailing slash (`trailingSlash: tr
 | Contact | `/contact-us/` |
 
 Don't rename a URL without adding a redirect.
+
+Old WordPress URLs with no page here are redirected permanently in `next.config.ts`:
+`/portfolio-category/products/` goes to `/products/`, and the theme's demo posts and
+archives (`/category/…`, `/tag/…`, `/author/…`, `/type/…`, header/footer builders) go to `/`.
+
+## SEO
+
+- Per-page title, description, canonical URL and Open Graph via `pageMetadata()` in `src/lib/seo.ts`.
+- `/sitemap.xml` and `/robots.txt` are generated from `src/app/sitemap.ts` and `src/app/robots.ts`.
+- JSON-LD: `Organization` on the home page, `BreadcrumbList` on every inner page.
+- The public origin comes from `NEXT_PUBLIC_SITE_URL` (default `https://aceparts.co.th`).

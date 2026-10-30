@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { absoluteUrl } from "@/lib/seo";
+import JsonLd from "./JsonLd";
 
 export interface Crumb {
   label: string;
@@ -34,6 +36,19 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
           );
         })}
       </ol>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: trail.map((crumb, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: crumb.label,
+            // The current page (last item) may omit its URL.
+            ...(crumb.href && { item: absoluteUrl(crumb.href) }),
+          })),
+        }}
+      />
     </nav>
   );
 }
