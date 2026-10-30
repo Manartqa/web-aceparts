@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SectionHeading, ServiceCard } from "@/components/common";
-import { services } from "@/content/site";
+import { services } from "@/content";
 
 export default function HomeServices() {
   return (

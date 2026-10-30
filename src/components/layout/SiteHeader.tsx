@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { company, nav } from "@/content/site";
+import { company, nav } from "@/content";
 
 export default function SiteHeader() {
   const pathname = usePathname();

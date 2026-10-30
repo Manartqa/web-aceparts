@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Service } from "@/content/site";
+import type { Service } from "@/content";
 
 interface ServiceCardProps {
   service: Service;

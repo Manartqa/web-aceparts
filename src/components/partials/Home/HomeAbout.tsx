@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/common";
-import { company, products, services } from "@/content/site";
+import { company, products, services } from "@/content";
 
 const stats = [
   { value: String(company.founded), label: "Established" },

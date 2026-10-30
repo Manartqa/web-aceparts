@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Raleway, Titillium_Web } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/layout";
-import { company } from "@/content/site";
+import { company } from "@/content";
 import "./globals.css";
 
 const raleway = Raleway({

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { SectionHeading } from "@/components/common";
-import { partners } from "@/content/site";
+import { partners } from "@/content";
 
 export default function HomePartners() {
   return (

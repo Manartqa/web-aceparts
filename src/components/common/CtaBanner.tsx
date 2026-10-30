@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { company } from "@/content/site";
+import { company } from "@/content";
 
 export default function CtaBanner() {
   return (

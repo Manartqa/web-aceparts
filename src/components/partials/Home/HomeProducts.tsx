@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ProductCard, SectionHeading } from "@/components/common";
-import { products } from "@/content/site";
+import { products } from "@/content";
 
 export default function HomeProducts() {
   return (

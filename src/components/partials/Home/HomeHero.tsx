@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { company, heroImages } from "@/content/site";
+import { company, heroImages } from "@/content";
 
 const SLIDE_MS = 6000;
 

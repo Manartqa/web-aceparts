@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { company, services } from "@/content/site";
+import { company, services } from "@/content";
 
 export default function SiteFooter() {
   return (
