@@ -43,7 +43,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               {product.items.map((item, i) => (
                 <li key={item.name} className="grid gap-6 rounded-3xl bg-brand-soft/60 p-6 lg:grid-cols-[1fr_2fr] lg:p-8">
                   <div>
-                    <span className="font-display text-sm font-bold text-accent">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-display text-sm font-bold text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
                     <h2 className="mt-2 font-display text-2xl font-bold text-ink">{item.name}</h2>
                     <p className="mt-3 leading-relaxed">{item.description}</p>
                   </div>
@@ -102,7 +102,7 @@ function PagerLink({ product, direction }: { product: Product; direction: "prev"
       href={product.href}
       className={`group rounded-2xl p-4 transition hover:bg-brand-soft ${isNext ? "text-right sm:col-start-2" : ""}`}
     >
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-ink">
         {isNext ? "Next product →" : "← Previous product"}
       </span>
       <span className="mt-1 block font-display text-lg font-bold text-ink group-hover:text-brand">{product.name}</span>

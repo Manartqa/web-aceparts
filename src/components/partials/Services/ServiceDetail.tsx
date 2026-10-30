@@ -33,7 +33,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                           active ? "bg-brand text-white" : "text-ink hover:bg-white"
                         }`}
                       >
-                        <span className={active ? "text-accent" : "text-brand/40"}>{String(i + 1).padStart(2, "0")}.</span>
+                        <span className={active ? "text-accent" : "text-brand/70"}>{String(i + 1).padStart(2, "0")}.</span>
                         {s.name}
                       </Link>
                     </li>

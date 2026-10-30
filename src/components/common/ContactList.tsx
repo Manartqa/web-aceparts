@@ -12,7 +12,7 @@ const icons = {
 };
 
 export default function ContactList({ tone = "light" }: ContactListProps) {
-  const link = tone === "light" ? "hover:text-accent" : "font-semibold text-brand hover:text-accent";
+  const link = tone === "light" ? "hover:text-accent" : "font-semibold text-brand hover:text-accent-ink";
 
   return (
     <ul className="space-y-4 text-sm">

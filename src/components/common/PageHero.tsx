@@ -12,7 +12,8 @@ interface PageHeroProps {
 export default function PageHero({ title, eyebrow, breadcrumbs, image = "/images/bg/segment.jpg" }: PageHeroProps) {
   return (
     <section className="relative isolate overflow-hidden bg-brand-deep pb-16 pt-36 lg:pb-20 lg:pt-44">
-      <Image src={image} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
+      {/* The page's LCP element. */}
+      <Image src={image} alt="" fill loading="eager" fetchPriority="high" sizes="100vw" className="-z-20 object-cover" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-brand-deep/95 via-brand/85 to-brand/60" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">

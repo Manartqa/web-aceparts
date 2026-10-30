@@ -46,7 +46,7 @@ export default function HomeAbout() {
             ))}
           </dl>
 
-          <Link href="/about-us/" className="mt-10 inline-flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wider text-brand hover:text-accent">
+          <Link href="/about-us/" className="mt-10 inline-flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wider text-brand hover:text-accent-ink">
             More about us <span aria-hidden>→</span>
           </Link>
         </div>

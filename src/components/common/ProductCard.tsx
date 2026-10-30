@@ -30,7 +30,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
       </div>
       <div className="flex items-center justify-between gap-4 border-t border-brand/5 px-6 py-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Products</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-ink">Products</p>
           <h3 className="mt-1 font-display text-lg font-bold text-ink">{product.name}</h3>
         </div>
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand transition group-hover:bg-brand group-hover:text-white" aria-hidden>

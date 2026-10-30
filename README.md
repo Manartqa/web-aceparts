@@ -27,7 +27,22 @@ Open http://localhost:3000.
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
 
-CI (`.github/workflows/ci.yml`) runs `lint` and `build` on every push and pull request.
+| `npm run test:e2e` | Playwright tests against the production build (desktop + mobile) |
+
+CI (`.github/workflows/ci.yml`) runs `lint` and `build`, and the Playwright suite, on every
+push to `main` and every pull request.
+
+## Testing
+
+`e2e/` holds Playwright tests that build the site and run it with `next start` on port 3100:
+
+- `pages.spec.ts`: every page returns 200 with a title, `<h1>` and canonical URL; 404s;
+  old WordPress redirects; sitemap and robots.
+- `navigation.spec.ts`: desktop dropdown, mobile menu, product pager, no horizontal scroll.
+- `contact.spec.ts`: form validation and the honeypot. These never send email.
+- `accessibility.spec.ts`: axe (WCAG 2 A/AA) finds no serious or critical issues on any page.
+
+First run: `npx playwright install chromium`.
 
 ## Project structure
 

@@ -27,7 +27,8 @@ export default function HomeHero() {
             src={src}
             alt=""
             fill
-            priority={i === 0}
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchPriority={i === 0 ? "high" : "auto"}
             sizes="100vw"
             className={`object-cover ${i === current ? "animate-[hero-zoom_8s_ease-out_forwards]" : ""}`}
           />

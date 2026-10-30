@@ -40,7 +40,7 @@ export default function SiteHeader() {
             alt={company.name}
             width={128}
             height={102}
-            priority
+            loading="eager"
             className={`w-auto transition-all duration-300 ${solid ? "h-11" : "h-16"}`}
           />
           <span className="hidden font-display text-lg font-semibold tracking-wide text-white sm:block">

@@ -35,16 +35,19 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
     message: field("message"),
   };
 
-  // Bots fill the hidden field or submit instantly; pretend it worked.
+  // Bots fill the hidden field; pretend it worked.
+  if (field("website")) return { status: "success" };
+
+  // Validate before the timing check, so a person who submits an incomplete
+  // form quickly sees the errors instead of a fake "Thank you".
+  const errors = validateContact(values);
+  if (errors) return { status: "error", message: "Please check the highlighted fields.", errors, values };
+
+  // A complete form submitted within seconds of loading is a bot; pretend it worked.
   // startedAt is set by the browser on mount, so it is empty without JS; that
   // case is let through rather than silently dropping a real message.
   const startedAt = Number(field("startedAt"));
-  if (field("website") || (startedAt && Date.now() - startedAt < MIN_FILL_MS)) {
-    return { status: "success" };
-  }
-
-  const errors = validateContact(values);
-  if (errors) return { status: "error", message: "Please check the highlighted fields.", errors, values };
+  if (startedAt && Date.now() - startedAt < MIN_FILL_MS) return { status: "success" };
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (rateLimited(ip)) {

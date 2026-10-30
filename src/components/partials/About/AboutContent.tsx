@@ -36,7 +36,7 @@ export default function AboutContent() {
 
             <div className="flex flex-col gap-8">
               <article className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-brand/5 lg:p-10">
-                <h3 className="font-display text-sm font-bold uppercase tracking-[0.2em] text-accent">Our Vision</h3>
+                <h3 className="font-display text-sm font-bold uppercase tracking-[0.2em] text-accent-ink">Our Vision</h3>
                 <blockquote className="mt-4 leading-relaxed">“{vision.text}”</blockquote>
                 <p className="mt-6 font-display font-bold text-ink">{vision.author}</p>
                 <p className="text-sm">{vision.role}</p>

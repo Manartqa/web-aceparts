@@ -5,6 +5,8 @@
   --color-brand-deep: #031630;
   --color-brand-soft: #e8eef6;
   --color-accent: #e8a33d;
+  /* Accent for text on light backgrounds; #e8a33d is too faint there (WCAG AA). */
+  --color-accent-ink: #9a5c00;
   --color-ink: #1a1a1a;
   --color-muted: #5b6573;
   --font-sans: var(--font-raleway);
