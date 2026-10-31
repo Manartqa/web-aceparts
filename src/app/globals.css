@@ -11,6 +11,7 @@
   --color-muted: #5b6573;
   --font-sans: var(--font-raleway);
   --font-display: var(--font-titillium);
+  --font-hero: var(--font-poppins);
 }
 
 html {
@@ -28,5 +29,58 @@ body {
   }
   to {
     transform: scale(1.08);
+  }
+}
+
+/* Home hero intro, after the WordPress Slider Revolution layers: text rises
+   out of a mask, then four frame lines draw in. Delay is set per element. */
+@keyframes hero-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes hero-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes hero-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.hero-rise {
+  animation: hero-rise 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+.hero-draw-x {
+  animation: hero-draw-x 2.6s cubic-bezier(0.65, 0, 0.35, 1) 1.5s both;
+}
+
+.hero-draw-y {
+  animation: hero-draw-y 2s cubic-bezier(0.65, 0, 0.35, 1) 1.5s both;
+}
+
+.hero-fade {
+  animation: hero-fade 0.8s ease-out 2.2s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise,
+  .hero-draw-x,
+  .hero-draw-y,
+  .hero-fade,
+  .hero-zoom {
+    animation: none;
   }
 }

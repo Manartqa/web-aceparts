@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Raleway, Titillium_Web } from "next/font/google";
+import { Poppins, Raleway, Titillium_Web } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/layout";
 import { company } from "@/content";
 import { defaultOpenGraph, noindex, siteUrl } from "@/lib/seo";
@@ -14,6 +14,13 @@ const titillium = Titillium_Web({
   variable: "--font-titillium",
   subsets: ["latin"],
   weight: ["300", "400", "600", "700"],
+});
+
+// Home hero title only, as on the WordPress slider.
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: "500",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${raleway.variable} ${titillium.variable} h-full antialiased`}
+      className={`${raleway.variable} ${titillium.variable} ${poppins.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />

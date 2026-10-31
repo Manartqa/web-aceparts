@@ -2,6 +2,10 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { pages } from "./routes";
 
+// Check the settled page: mid-animation (e.g. the home hero fading in) axe
+// measures contrast at partial opacity. Also covers the reduced-motion styles.
+test.use({ reducedMotion: "reduce" });
+
 for (const path of pages) {
   test(`${path} has no serious accessibility violations`, async ({ page }) => {
     await page.goto(path);
