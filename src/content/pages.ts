@@ -46,4 +46,6 @@ export const contactPage = {
   detailsTitle: "A.C.E. Parts Co., Ltd.",
   detailsText:
     "Give us a call or drop by anytime, we endeavour to answer all enquiries within 24 hours on business days. We will be happy to answer your questions.",
+  // Google Maps search for the office. New: the WordPress page had no map.
+  mapQuery: "599/59 Ratchadaphisek Road, Chatuchak, Bangkok 10900, Thailand",
 };
