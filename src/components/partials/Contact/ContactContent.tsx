@@ -1,10 +1,10 @@
 import { ContactList, PageHero, SectionHeading } from "@/components/common";
-import { contactPage } from "@/content";
+import { company, contactPage } from "@/content";
 import ContactForm from "./ContactForm";
 
-const mapQuery = encodeURIComponent(contactPage.mapQuery);
-
 export default function ContactContent() {
+  const { map } = contactPage;
+
   return (
     <>
       <PageHero title={contactPage.title} eyebrow={contactPage.eyebrow} breadcrumbs={[{ label: "Contact Us" }]} />
@@ -23,26 +23,39 @@ export default function ContactContent() {
         </div>
       </section>
 
-      <section className="px-4 pb-24 sm:px-6">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl shadow-xl shadow-brand/10 ring-1 ring-brand/10">
-          {/* Keyless Google Maps embed; lazy so it doesn't slow the page above it. */}
-          <iframe
-            title="A.C.E. Parts Co., Ltd. office on Google Maps"
-            src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="block h-[420px] w-full border-0"
-          />
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-white px-6 py-4">
-            <p className="text-sm">{contactPage.mapQuery}</p>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`}
-              target="_blank"
-              rel="noopener"
-              className="rounded-full bg-brand px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-white transition hover:-translate-y-0.5 hover:bg-brand-deep"
-            >
-              Get directions
-            </a>
+      <section className="bg-brand-soft/60 py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <SectionHeading eyebrow={map.eyebrow} title={map.title} />
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-brand/10">
+              {/* Keyless Google Maps embed; lazy so it doesn't slow the page above it. */}
+              <iframe
+                title={`${company.name} on Google Maps`}
+                src={map.embedUrl}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="block h-[360px] w-full border-0 lg:h-full lg:min-h-[360px]"
+              />
+            </div>
+
+            <div className="flex flex-col rounded-3xl bg-white p-8 shadow-sm ring-1 ring-brand/10">
+              <h3 className="font-display text-lg font-bold text-brand">{company.name}</h3>
+              <div className="mt-6">
+                <ContactList tone="dark" items={["address", "phone"]} />
+              </div>
+              <a
+                href={map.link}
+                target="_blank"
+                rel="noopener"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl border border-brand px-6 py-3.5 font-display text-sm font-bold uppercase tracking-wider text-brand transition hover:bg-brand hover:text-white lg:mt-auto"
+              >
+                <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden>
+                  <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Zm0 0v14m6-12v14" />
+                </svg>
+                Get directions on Google Maps
+              </a>
+            </div>
           </div>
         </div>
       </section>

@@ -1,8 +1,11 @@
 import { company } from "@/content";
 
+type ContactItem = "address" | "phone" | "email";
+
 interface ContactListProps {
   // "light" for dark backgrounds (footer), "dark" for white backgrounds.
   tone?: "light" | "dark";
+  items?: ContactItem[];
 }
 
 const icons = {
@@ -11,23 +14,29 @@ const icons = {
   email: "M4 6h16v12H4zM4 7l8 6 8-6",
 };
 
-export default function ContactList({ tone = "light" }: ContactListProps) {
+export default function ContactList({ tone = "light", items = ["address", "phone", "email"] }: ContactListProps) {
   const link = tone === "light" ? "hover:text-accent" : "font-semibold text-brand hover:text-accent-ink";
 
   return (
     <ul className="space-y-4 text-sm">
-      <li className="flex gap-3">
-        <Icon path={icons.address} />
-        <span>{company.address}</span>
-      </li>
-      <li className="flex gap-3">
-        <Icon path={icons.phone} />
-        <a href={`tel:${company.phone}`} className={link}>{company.phone}</a>
-      </li>
-      <li className="flex gap-3">
-        <Icon path={icons.email} />
-        <a href={`mailto:${company.email}`} className={`break-all ${link}`}>{company.email}</a>
-      </li>
+      {items.includes("address") && (
+        <li className="flex gap-3">
+          <Icon path={icons.address} />
+          <span>{company.address}</span>
+        </li>
+      )}
+      {items.includes("phone") && (
+        <li className="flex gap-3">
+          <Icon path={icons.phone} />
+          <a href={`tel:${company.phone}`} className={link}>{company.phone}</a>
+        </li>
+      )}
+      {items.includes("email") && (
+        <li className="flex gap-3">
+          <Icon path={icons.email} />
+          <a href={`mailto:${company.email}`} className={`break-all ${link}`}>{company.email}</a>
+        </li>
+      )}
     </ul>
   );
 }
