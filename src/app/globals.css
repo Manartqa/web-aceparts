@@ -85,3 +85,37 @@ body {
     animation: none;
   }
 }
+
+/* Image viewer (src/components/partials/Products/Gallery.tsx). The page behind
+   it does not scroll while it is open. */
+html:has(.lightbox[open]) {
+  overflow: hidden;
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes lightbox-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.lightbox[open] {
+  animation: lightbox-in 0.2s ease-out;
+}
+
+.lightbox[open]::backdrop {
+  animation: lightbox-fade 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox[open],
+  .lightbox[open]::backdrop {
+    animation: none;
+  }
+}

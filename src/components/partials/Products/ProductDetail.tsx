@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CtaBanner, PageHero, ProductCard, QuoteLink, SectionHeading } from "@/components/common";
 import { getProduct, products, productsPage, type Product } from "@/content";
+import { Gallery, GalleryImage } from "./Gallery";
 
 interface ProductDetailProps {
   product: Product;
@@ -12,6 +12,11 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const prev = products[index - 1];
   const next = products[index + 1];
   const related = product.related.map(getProduct).filter((p): p is Product => Boolean(p));
+  // Every image on the page, in order, so the viewer steps through all of them.
+  const galleryPhotos = product.gallery.map((src, i) => ({ src, alt: `${product.name} ${i + 1}` }));
+  const itemPhotos = (product.items ?? []).map((item) =>
+    item.images.map((src, j) => ({ src, alt: `${item.name} ${j + 1}` })),
+  );
 
   return (
     <>
@@ -29,36 +34,38 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </p>
           <QuoteLink />
 
-          {product.gallery.length > 0 && (
-            <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {product.gallery.map((src, i) => (
-                <li key={src}>
-                  <GalleryImage src={src} alt={`${product.name} ${i + 1}`} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <Gallery photos={[...galleryPhotos, ...itemPhotos.flat()]}>
+            {galleryPhotos.length > 0 && (
+              <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {galleryPhotos.map((photo) => (
+                  <li key={photo.src}>
+                    <GalleryImage {...photo} />
+                  </li>
+                ))}
+              </ul>
+            )}
 
-          {product.items && (
-            <ol className="mt-12 space-y-6">
-              {product.items.map((item, i) => (
-                <li key={item.name} className="grid gap-6 rounded-3xl bg-brand-soft/60 p-6 lg:grid-cols-[1fr_2fr] lg:p-8">
-                  <div>
-                    <span className="font-display text-sm font-bold text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
-                    <h2 className="mt-2 font-display text-2xl font-bold text-ink">{item.name}</h2>
-                    <p className="mt-3 leading-relaxed">{item.description}</p>
-                  </div>
-                  <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {item.images.map((src, j) => (
-                      <li key={src}>
-                        <GalleryImage src={src} alt={`${item.name} ${j + 1}`} />
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          )}
+            {product.items && (
+              <ol className="mt-12 space-y-6">
+                {product.items.map((item, i) => (
+                  <li key={item.name} className="grid gap-6 rounded-3xl bg-brand-soft/60 p-6 lg:grid-cols-[1fr_2fr] lg:p-8">
+                    <div>
+                      <span className="font-display text-sm font-bold text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
+                      <h2 className="mt-2 font-display text-2xl font-bold text-ink">{item.name}</h2>
+                      <p className="mt-3 leading-relaxed">{item.description}</p>
+                    </div>
+                    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                      {itemPhotos[i].map((photo) => (
+                        <li key={photo.src}>
+                          <GalleryImage {...photo} />
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Gallery>
 
           <nav aria-label="Product navigation" className="mt-16 grid gap-4 border-t border-brand/10 pt-8 sm:grid-cols-2">
             {prev ? <PagerLink product={prev} direction="prev" /> : <span />}
@@ -84,15 +91,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         <CtaBanner />
       </div>
     </>
-  );
-}
-
-// Opens the full-size image in a new tab, like the WordPress gallery did.
-function GalleryImage({ src, alt }: { src: string; alt: string }) {
-  return (
-    <a href={src} target="_blank" rel="noopener" className="group relative block aspect-square overflow-hidden rounded-2xl bg-white ring-1 ring-brand/10">
-      <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-contain p-3 transition duration-500 group-hover:scale-105" />
-    </a>
   );
 }
 
