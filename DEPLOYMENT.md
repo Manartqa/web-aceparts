@@ -1,17 +1,30 @@
 # Deployment
 
-The site runs as a **Docker container behind nginx** on a Linux VM. The image is
-built on a Windows workstation with `scripts/deploy.ps1`, copied to the VM as a
-tarball, loaded, and started with `docker run`.
+The site runs as a **Docker container on the on-premise server `websmart`**, next
+to `smartalliance-web`, behind FortiGate and the company's central nginx host.
+Same layout as the Smart Alliance site (its `DEPLOYMENT-ONPREM.md`); only the
+names and the host port differ.
 
 ```
-internet ──▶ nginx :80/:443 ──▶ 127.0.0.1:3000 ──▶ container: node server.js
-             TLS (Let's Encrypt)                    restart: unless-stopped
-             :80 → 301 to https
+internet ──▶ FortiGate ──────────────▶ central nginx ─────────────▶ websmart 172.22.22.201:3001
+             public IP                  TLS (certificate here)        container aceparts-web
+             NAT 80/443, no TLS         :80 → 301 https               node server.js (:3000 inside)
+                                        host-based routing
 ```
 
-Placeholders used below: `<user>@<vm-host>` for the SSH login, `~/aceparts-web.env`
-for the runtime env file. Fill in the real values once the VM exists.
+| | |
+|---|---|
+| App server | `websmart` — Ubuntu, `172.22.22.201`, SSH `smart` |
+| Deploy path | `/opt/docker/aceparts` (`compose.yaml` + `.env.production`) |
+| Container | `aceparts-web`, published on `172.22.22.201:3001` → `3000` inside |
+| Neighbour | `smartalliance-web` on `172.22.22.201:3000` — not touched by anything here |
+| Central nginx | `172.22.22.170` — TLS, port 80 redirect, routing by host name. Site file: [scripts/nginx/aceparts.conf](scripts/nginx/aceparts.conf) |
+| FortiGate | Public IP; forwards 80 and 443 to the central nginx |
+| Canonical host | `https://aceparts.co.th` (no `www`), as on the WordPress site |
+
+The image is built on a Windows workstation with `scripts/deploy.ps1`, copied to
+the server as a tarball and started with Docker Compose. The server holds no
+source code and builds nothing.
 
 ---
 
@@ -21,140 +34,163 @@ The most common way to misconfigure this app.
 
 | Variable | Where it is set | Changing it needs |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_NOINDEX` | `deploy.ps1 -SiteUrl` / `-Staging` → `docker build --build-arg` | **A rebuild.** Baked into canonical tags, `sitemap.xml` and `robots.txt` by `next build`. Putting them in the env file does nothing. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `~/aceparts-web.env` → `docker run --env-file` | **A new container** ([step 5](#5-swap-the-container)). `docker restart` does not re-read the file. |
+| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_NOINDEX` | `deploy.ps1 -SiteUrl` / `-Staging` → `docker build --build-arg` | **A rebuild.** Baked into canonical tags, `sitemap.xml` and `robots.txt` by `next build`. Putting them in `.env.production` does nothing. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `/opt/docker/aceparts/.env.production` → `env_file:` in `compose.yaml` | **A new container**: `sudo docker compose up -d --force-recreate`. `restart` does not re-read the file. |
 
 ---
 
-## First-time VM setup
+## Proxy chain
 
-Needs Docker, nginx and certbot on the VM, and DNS for `aceparts.co.th` and
-`www.aceparts.co.th` pointing at it.
+The app needs only what the Smart Alliance site gets: `Host` unchanged and
+`X-Forwarded-For` **overwritten** with the visitor's address. The contact form's
+rate limit (`src/app/contact-us/actions.ts`) keys on the left-most
+`X-Forwarded-For` entry; `$proxy_add_x_forwarded_for` appends to whatever the
+visitor sent, so a spammer could pick a fresh address on every request.
+
+### FortiGate
+
+The VIP for 80/443 → `172.22.22.170` already exists for the Smart Alliance site;
+nginx routes by host name, so nothing new is needed for aceparts beyond:
+
+- **No source NAT** on the inbound policy, as for Smart Alliance. With SNAT every
+  visitor arrives as FortiGate's inside address and shares one contact-form budget
+  (5 per 10 min).
+- Outbound from `172.22.22.201`: 443 to `oauth2.googleapis.com` and
+  `gmail.googleapis.com` (the contact form), and DNS. A blocked call does not
+  break the site — it fails the form only, and the container log names the call.
+- From `172.22.22.170` to `172.22.22.201:3001`, if the two are in different
+  segments.
+
+### Central nginx
+
+[scripts/nginx/aceparts.conf](scripts/nginx/aceparts.conf):
+
+| | |
+|---|---|
+| :80 | `/.well-known/acme-challenge/` from `/var/www/letsencrypt`, everything else `301` to `https://aceparts.co.th` |
+| :443 `www.aceparts.co.th` | `301` to `https://aceparts.co.th`, in one hop |
+| :443 `aceparts.co.th` | `proxy_pass http://172.22.22.201:3001`, plus security headers (Next.js sends none) and a short HSTS |
+| `Host` | `$host` — unchanged |
+| `X-Forwarded-For` | `$remote_addr` — overwritten |
+| `proxy_buffering` | off (Next streams HTML) |
+
+nginx 1.25.1 and later warn that `listen … http2` is deprecated. It still works;
+`http2 on;` is the newer spelling if the host's other sites use it.
+
+The app already gzips its responses, so nginx does not compress them again. There
+is no Content-Security-Policy yet: Next.js inline scripts would need nonces, so a
+CSP needs testing of its own.
+
+### Certificate
+
+On the central nginx host, covering **`aceparts.co.th` and
+`www.aceparts.co.th`**. The site file points at Let's Encrypt paths; change the
+`ssl_certificate*` lines if a purchased certificate is used.
+
+HTTP-01 cannot issue until DNS points at FortiGate. To test end to end before the
+switch, use a purchased certificate or a DNS-01 challenge (a TXT record, so it
+needs DNS access):
+
+```bash
+sudo certbot certonly --manual --preferred-challenges dns -d aceparts.co.th -d www.aceparts.co.th
+```
+
+Manual DNS-01 does not renew itself. After the switch, re-issue once over HTTP-01
+so the timer renews it:
+
+```bash
+sudo certbot certonly --webroot -w /var/www/letsencrypt -d aceparts.co.th -d www.aceparts.co.th --force-renewal
+```
+
+---
+
+## First-time setup
+
+### App server (`websmart`)
+
+As `smart`. Drop `sudo` from `docker` commands if `smart` is in the `docker` group.
+
+```bash
+sudo install -d -o smart -g smart -m 750 /opt/docker/aceparts
+```
+
+Port 3001 is free (3000 belongs to `smartalliance-web`):
+
+```bash
+sudo ss -ltnp | grep ':3001 ' || echo free
+```
+
+Google is reachable — each should print an HTTP status, not time out:
+
+```bash
+for u in https://oauth2.googleapis.com/token https://gmail.googleapis.com/; do curl -s -o /dev/null -m 10 -w "%{http_code} $u\n" "$u"; done
+```
 
 ### Runtime env file
 
 ```bash
-install -m 600 /dev/null ~/aceparts-web.env && nano ~/aceparts-web.env
+install -m 600 /dev/null /opt/docker/aceparts/.env.production && nano /opt/docker/aceparts/.env.production
 ```
 
-Contents (see `.env.example`):
+Contents (see `.env.example`). The same lines as a working `.env.local` can be
+copied in as they are:
 
 ```
 GOOGLE_SERVICE_ACCOUNT_EMAIL=...@....iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
 MAIL_SENDER=admin@acethailand.co.th
 CONTACT_MAIL_TO=operations@acethailand.co.th
 ```
 
-`--env-file` takes each line as is: no quotes around the key, and keep its `\n`
-escapes on one line; the app turns them back into line breaks.
+Keep the key on one line. Compose turns its `\n` escapes into line breaks inside
+double quotes; without quotes the app does it instead. Either works.
+
+Names only, values never printed:
+
+```bash
+sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' /opt/docker/aceparts/.env.production | sort
+```
 
 The service account needs **domain-wide delegation** in the Google Workspace Admin
 console (Security → API controls) for `https://www.googleapis.com/auth/gmail.send`
 only. That lets it send as *any* user in the domain, so treat the key like a
-password; to cut it off, delete the key or the delegation entry.
+password; to cut it off, delete the key or the delegation entry. Never commit the
+file, paste it into chat or open it on a shared screen.
 
-### nginx site
+### Central nginx host
 
-`/etc/nginx/sites-available/aceparts-web`, symlinked into `sites-enabled`. This is
-the HTTP-only config for the first start; [TLS](#tls) replaces it:
+Nothing on this host may be reloaded with a config that fails `nginx -t` — other
+sites share it. The certificate ([Certificate](#certificate)) must exist first;
+`nginx -t` fails on a missing certificate file.
 
-```nginx
-server {
-    listen 80;
-    server_name aceparts.co.th www.aceparts.co.th;
+From the workstation:
 
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        # Overwrite, never append. See below.
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+```powershell
+scp .\scripts\nginx\aceparts.conf <user>@172.22.22.170:/tmp/
+```
+
+On the nginx host (`sites-available` layout; for `conf.d`, move it to
+`/etc/nginx/conf.d/` and skip the symlink). Check first that no `aceparts` site
+exists already:
+
+```bash
+ls /etc/nginx/sites-available /etc/nginx/conf.d 2>/dev/null
+```
+
+```bash
+sudo install -d -m 755 /var/www/letsencrypt
+```
+
+```bash
+sudo mv /tmp/aceparts.conf /etc/nginx/sites-available/aceparts.conf && sudo ln -s /etc/nginx/sites-available/aceparts.conf /etc/nginx/sites-enabled/
 ```
 
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**Why overwrite `X-Forwarded-For`:** the contact form's rate limit
-(`src/app/contact-us/actions.ts`) keys on the left-most `X-Forwarded-For` entry.
-The usual `$proxy_add_x_forwarded_for` appends to whatever the visitor sent, so a
-spammer could send a fresh fake address on every request and never be limited.
-
-### TLS
-
-Only possible once DNS resolves to the VM:
-
-```bash
-sudo certbot --nginx -d aceparts.co.th -d www.aceparts.co.th --redirect
-```
-
-Then replace the site file with the final config below and reload nginx. It does
-three things the certbot edit does not:
-- **One canonical host.** The canonical host is `https://aceparts.co.th` (no
-  `www`), as on the WordPress site. Every other address reaches it in one 301:
-  `http://`, `http://www.` and `https://www.`.
-- **Security headers.** Next.js sends none.
-- **HTTP/2.**
-
-```nginx
-# HTTP: straight to the canonical host. certbot answers its renewal challenge
-# here by itself.
-server {
-    listen 80;
-    server_name aceparts.co.th www.aceparts.co.th;
-    return 301 https://aceparts.co.th$request_uri;
-}
-
-# www over HTTPS: same, in one hop.
-server {
-    listen 443 ssl http2;
-    server_name www.aceparts.co.th;
-    ssl_certificate /etc/letsencrypt/live/aceparts.co.th/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/aceparts.co.th/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-    return 301 https://aceparts.co.th$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name aceparts.co.th;
-    ssl_certificate /etc/letsencrypt/live/aceparts.co.th/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/aceparts.co.th/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-    # Short HSTS until the switch is verified, then raise it (go-live checklist).
-    add_header Strict-Transport-Security "max-age=300" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        # Overwrite, never append. See "nginx site" above.
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-The app already gzips its responses, so nginx does not compress them again. There
-is no Content-Security-Policy yet. Next.js inline scripts would need nonces, so a
-CSP needs testing of its own before it goes in.
-
-Renewal is automatic; check it with `sudo certbot renew --dry-run`.
+`reload`, not `restart`: the other sites keep serving. If `nginx -t` fails,
+nothing was applied — remove the symlink and fix the file.
 
 ---
 
@@ -169,8 +205,8 @@ Docker Desktop must be running. From the repository root, on the commit to ship:
 ```
 
 Runs lint and the Playwright suite, builds the image for
-`https://aceparts.co.th`, and writes `aceparts-web.tar` (ignored by git). For a
-staging address, which must not be indexed:
+`https://aceparts.co.th`, and writes `aceparts-web.tar` (about 105 MB, ignored by
+git). For a staging address, which must not be indexed:
 
 ```powershell
 .\scripts\deploy.ps1 -SiteUrl https://staging.aceparts.co.th -Staging
@@ -179,77 +215,77 @@ staging address, which must not be indexed:
 ### 2. Upload
 
 ```powershell
-scp .\aceparts-web.tar <user>@<vm-host>:~/
+scp .\aceparts-web.tar .\compose.yaml smart@172.22.22.201:/opt/docker/aceparts/
 ```
 
-### 3. Load the image
+`compose.yaml` only needs copying the first time and when it changes.
 
-Tag the running image first so there is something to roll back to:
+### 3. Load and start (on `websmart`)
+
+```bash
+cd /opt/docker/aceparts
+```
+
+Tag the running image first so there is something to roll back to (skip on the
+first deploy):
 
 ```bash
 sudo docker tag aceparts-web:latest aceparts-web:previous
 ```
 
 ```bash
-sudo docker load -i ~/aceparts-web.tar && rm ~/aceparts-web.tar
+sudo docker load -i aceparts-web.tar && rm aceparts-web.tar
 ```
 
-### 4. Check the runtime env
-
-Lists variables that differ between the env file and the running container
-(names only). `PATH`, `NODE_*`, `PORT`, `HOSTNAME`, `NEXT_TELEMETRY_DISABLED`
-always appear indented; the image sets them.
+Should print `Loaded image: aceparts-web:latest`.
 
 ```bash
-comm -3 <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' ~/aceparts-web.env | sort) <(sudo docker inspect aceparts-web --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -v '^$' | sort) | sed -E 's/=.*//'
+sudo docker compose config --quiet && sudo docker compose up -d --force-recreate
 ```
 
-### 5. Swap the container
-
-The site returns 502 for 5–10 seconds.
+The site returns 502 for 5–10 seconds while the container starts. After about 30
+seconds:
 
 ```bash
-sudo docker rm aceparts-web-old 2>/dev/null || true
+sudo docker compose ps
 ```
 
+`aceparts-web` should be `Up … (healthy)`, ports `172.22.22.201:3001->3000/tcp`.
+
+### 4. Verify
+
+On `websmart`, before DNS or nginx are involved:
+
 ```bash
-sudo docker rename aceparts-web aceparts-web-old && sudo docker stop aceparts-web-old
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: aceparts.co.th' http://172.22.22.201:3001/
 ```
 
-```bash
-sudo docker run -d --name aceparts-web --restart unless-stopped -p 127.0.0.1:3000:3000 --env-file ~/aceparts-web.env --log-opt max-size=10m --log-opt max-file=5 aceparts-web:latest
-```
-
-The port is published on `127.0.0.1` only, so the container is reachable through
-nginx alone. After about 30 seconds `sudo docker ps` should show it `(healthy)`.
-
-### 6. Verify
+`200`.
 
 ```bash
-curl -sI https://aceparts.co.th/ | head -1
-```
-
-```bash
-curl -s https://aceparts.co.th/robots.txt
+curl -s -H 'Host: aceparts.co.th' http://172.22.22.201:3001/robots.txt
 ```
 
 Production must show `Allow: /` and a `Sitemap:` line. `Disallow: /` means a
 staging build went to production: rebuild without `-Staging`.
 
 ```bash
-curl -s https://aceparts.co.th/sitemap.xml | grep -m2 '<loc>'
+curl -s -H 'Host: aceparts.co.th' http://172.22.22.201:3001/sitemap.xml | grep -m2 '<loc>'
 ```
 
 Every `<loc>` must start with `https://aceparts.co.th`.
 
 ```bash
-curl -sI https://aceparts.co.th/ | grep -iE 'strict-transport|x-content-type|x-frame|referrer-policy|x-powered-by'
+sudo docker compose logs --tail=50
 ```
 
-Four security headers, and no `X-Powered-By`.
+No errors; `Ready in …` near the top.
+
+Through FortiGate and nginx, from a machine **outside** the office network. Before
+the DNS switch, pin the names to the FortiGate public IP for one command:
 
 ```bash
-for u in http://aceparts.co.th/about-us/ http://www.aceparts.co.th/about-us/ https://www.aceparts.co.th/about-us/ https://aceparts.co.th/about-us https://aceparts.co.th/portfolio/ https://aceparts.co.th/wp-sitemap.xml; do printf '%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "$u"; done
+for u in http://aceparts.co.th/about-us/ http://www.aceparts.co.th/about-us/ https://www.aceparts.co.th/about-us/ https://aceparts.co.th/about-us https://aceparts.co.th/portfolio/ https://aceparts.co.th/wp-sitemap.xml; do printf '%s -> ' "$u"; curl -s -o /dev/null --resolve aceparts.co.th:80:<public-ip> --resolve aceparts.co.th:443:<public-ip> --resolve www.aceparts.co.th:80:<public-ip> --resolve www.aceparts.co.th:443:<public-ip> -w '%{http_code} %{redirect_url}\n' "$u"; done
 ```
 
 Each one is a single redirect:
@@ -258,40 +294,76 @@ Each one is a single redirect:
 - **`/portfolio/`** → `308` to `/products/`
 - **`/wp-sitemap.xml`** → `308` to `/sitemap.xml`
 
-Mail settings are only used when a message is sent, so send one real enquiry
-through `/contact-us/` and confirm it arrives. A missing variable is named in `sudo docker logs aceparts-web`.
+```bash
+curl -sI --resolve aceparts.co.th:443:<public-ip> https://aceparts.co.th/ | grep -iE '^HTTP|strict-transport|x-content-type|x-frame|referrer-policy|x-powered-by'
+```
 
-### 7. Clean up
+`200`, four security headers, no `X-Powered-By`, and a certificate curl accepts
+(no `-k`). After the DNS switch, repeat without `--resolve`.
+
+Mail settings are only used when a message is sent, so send one real enquiry
+through `/contact-us/` and confirm it arrives. A missing variable is named in
+`sudo docker compose logs`.
+
+Then check that nginx sees real visitor addresses: note your public IP on the
+outside machine (`curl -s https://ifconfig.me`), make a request, and on the nginx
+host `sudo tail -n 5 /var/log/nginx/access.log`. The first field must be your
+public IP. A private address means FortiGate source-NATs; see
+[FortiGate](#fortigate).
+
+### 5. Clean up
 
 After a day or two without problems:
 
 ```bash
-sudo docker rm aceparts-web-old && sudo docker rmi aceparts-web:previous
+sudo docker rmi aceparts-web:previous && sudo docker image prune -f
 ```
 
 ## Rollback
 
-While `aceparts-web-old` exists:
+A release, while the `:previous` tag exists:
 
 ```bash
-sudo docker rm -f aceparts-web && sudo docker rename aceparts-web-old aceparts-web && sudo docker start aceparts-web
+cd /opt/docker/aceparts && sudo docker tag aceparts-web:previous aceparts-web:latest && sudo docker compose up -d --force-recreate
 ```
 
-If only the `:previous` tag remains:
+The whole site back to WordPress: point DNS back at the WordPress host (see the
+go-live checklist), then take this path out of service so nothing serves from two
+places. On the nginx host:
 
 ```bash
-sudo docker rm -f aceparts-web && sudo docker run -d --name aceparts-web --restart unless-stopped -p 127.0.0.1:3000:3000 --env-file ~/aceparts-web.env --log-opt max-size=10m --log-opt max-file=5 aceparts-web:previous
+sudo rm /etc/nginx/sites-enabled/aceparts.conf && sudo nginx -t && sudo systemctl reload nginx
+```
+
+On `websmart`:
+
+```bash
+cd /opt/docker/aceparts && sudo docker compose stop
 ```
 
 ## Operating
 
-```bash
-sudo docker ps
-sudo docker logs -f --tail=100 aceparts-web
-sudo docker image prune -f
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot certificates
-```
+On `websmart`, from `/opt/docker/aceparts`:
+
+| | |
+|---|---|
+| Status | `sudo docker compose ps` |
+| Logs | `sudo docker compose logs -f --tail=100` |
+| Restart (same container, same env) | `sudo docker compose restart` |
+| Apply an `.env.production` change | `sudo docker compose up -d --force-recreate` |
+| Stop / start | `sudo docker compose stop` / `sudo docker compose start` |
+| Health detail | `sudo docker inspect aceparts-web --format '{{json .State.Health}}'` |
+| Resource use | `sudo docker stats --no-stream aceparts-web` |
+| Clean old images | `sudo docker image prune -f` |
+
+On the central nginx host:
+
+| | |
+|---|---|
+| Test and apply a config change | `sudo nginx -t && sudo systemctl reload nginx` |
+| Access / error log | `sudo tail -f /var/log/nginx/access.log` / `error.log` |
+| Certificate expiry | `sudo certbot certificates` |
+| Renewal dry run | `sudo certbot renew --dry-run` |
 
 ---
 
@@ -306,14 +378,18 @@ Before the switch:
       enquiry from staging.
 - [ ] Take a full backup of the WordPress site (files and database). Keep it for at
       least 30 days after the switch.
-- [ ] Lower the DNS TTL for `aceparts.co.th` and `www` to 300 seconds a day ahead.
+- [ ] Note where DNS for `aceparts.co.th` and `www` points today (for rollback),
+      then lower the TTL to 300 seconds a day ahead.
 
 Switch:
 
 - [ ] Build and deploy production (`.\scripts\deploy.ps1`, no `-Staging`).
-- [ ] Point DNS at the VM, then run certbot ([TLS](#tls)).
-- [ ] Run the checks in [step 6](#6-verify), plus a few old URLs, e.g.
-      `curl -sI https://aceparts.co.th/hello-world/` → `308` to `/`.
+- [ ] Certificate in place and the nginx site enabled ([First-time setup](#first-time-setup)).
+- [ ] Point `aceparts.co.th` and `www.aceparts.co.th` at the FortiGate public IP.
+- [ ] Run the checks in [step 4](#4-verify) without `--resolve`, plus a few old
+      URLs, e.g. `curl -sI https://aceparts.co.th/hello-world/` → `308` to `/`.
+- [ ] If the certificate came from manual DNS-01, re-issue it over HTTP-01
+      ([Certificate](#certificate)).
 
 After:
 
@@ -324,13 +400,31 @@ After:
       sitemap (Bing also feeds ChatGPT search and Copilot).
 - [ ] Rich Results Test on `/` and one `/our-services/<slug>/` page: Organization,
       WebSite, Service and BreadcrumbList with no errors.
-- [ ] After a week without HTTPS problems, raise HSTS in the nginx config to
-      `max-age=31536000` ([TLS](#tls)).
+- [ ] After a week without HTTPS problems, raise HSTS in
+      `scripts/nginx/aceparts.conf` to `max-age=31536000` and reload nginx.
 - [ ] Restore the DNS TTL.
 - [ ] Shut down the WordPress hosting once the backup period ends.
 
 ## Known gaps
 
+- **Port 3001 is reachable from the whole LAN** in plain HTTP, and Docker's
+  iptables rules bypass ufw. The app believes any `X-Forwarded-For` it receives,
+  so a LAN host talking to 3001 directly can pick its own rate-limit key. To allow
+  only the nginx host, on `websmart`:
+
+  ```bash
+  sudo iptables -I DOCKER-USER -p tcp -m conntrack --ctorigdstport 3001 ! -s 172.22.22.170 -j DROP
+  ```
+
+  Not persistent across reboots on its own; save it with the host's usual
+  firewall tooling. Requests from `websmart` itself do not pass this chain, so
+  the step 4 checks keep working.
+- **`unhealthy` does not restart the container.** `restart: unless-stopped` only
+  reacts to the process exiting; a wedged process shows `unhealthy` in
+  `docker compose ps` and stays up.
+- **The port binding needs `172.22.22.201` to exist when Docker starts.** If the
+  container is missing after a reboot, check `ip addr`, then
+  `sudo docker compose up -d`.
 - **Rate limiting is per container, in memory.** It resets on restart and would
   multiply with replicas. Fine for one container.
 - **Old image URLs** (`/wp-content/uploads/...`) are not redirected; they 404.

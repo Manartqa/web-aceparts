@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Build the site image and export it as a tarball, ready to copy to the VM.
+    Build the site image and export it as a tarball, ready to copy to the server.
 
 .DESCRIPTION
-    Builds on the workstation, not the VM: `next build` needs about 2 GB of RAM,
-    and a build that fails here never reaches the server.
+    Builds on the workstation, not the server: `next build` needs about 2 GB of
+    RAM, and a build that fails here never reaches the server.
 
     Stops at the tarball. Copying, loading and swapping the container are done
     by hand; the commands are printed at the end (details in DEPLOYMENT.md).
 
 .PARAMETER SiteUrl
     Public origin, baked into canonical tags, sitemap.xml and robots.txt AT
-    BUILD TIME. Setting it in the VM's env file does nothing.
+    BUILD TIME. Setting it in the server's .env.production does nothing.
 
 .PARAMETER Staging
     Builds with NEXT_PUBLIC_NOINDEX=1: robots.txt disallows everything and
@@ -62,14 +62,13 @@ try {
     Write-Host "  $tar ($mb MB)"
 
     Write-Host "`nBuilt. Copy it up and swap the container (env check, verify, rollback: DEPLOYMENT.md):" -ForegroundColor Green
-    Write-Host "  scp .\$name.tar <user>@<vm-host>:~/"
-    Write-Host "  ssh <user>@<vm-host>"
+    Write-Host "  scp .\$name.tar smart@172.22.22.201:/opt/docker/aceparts/"
+    Write-Host "  ssh smart@172.22.22.201"
+    Write-Host "  cd /opt/docker/aceparts"
     Write-Host "  sudo docker tag $image ${name}:previous"
-    Write-Host "  sudo docker load -i ~/$name.tar && rm ~/$name.tar"
-    Write-Host "  sudo docker rm $name-old 2>/dev/null || true"
-    Write-Host "  sudo docker rename $name $name-old && sudo docker stop $name-old"
-    Write-Host "  sudo docker run -d --name $name --restart unless-stopped -p 127.0.0.1:3000:3000 --env-file ~/$name.env --log-opt max-size=10m --log-opt max-file=5 $image"
-    Write-Host "  sudo docker ps -a"
+    Write-Host "  sudo docker load -i $name.tar && rm $name.tar"
+    Write-Host "  sudo docker compose up -d --force-recreate"
+    Write-Host "  sudo docker compose ps"
 }
 finally {
     Pop-Location

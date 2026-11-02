@@ -28,6 +28,7 @@ scripts
 
 Dockerfile
 .dockerignore
+compose.yaml
 *.tar
 
 npm-debug.log*

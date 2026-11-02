@@ -1,0 +1,32 @@
+services:
+  web:
+    # Built and exported on a workstation by scripts/deploy.ps1, then loaded on
+    # the server with `docker load`. No `build:` block on purpose: the server
+    # holds no source code, and NEXT_PUBLIC_* are baked in at build time
+    # (DEPLOYMENT.md, "Build-time vs runtime").
+    image: aceparts-web:latest
+    container_name: aceparts-web
+
+    # Back after a crash and after a reboot; stays down if stopped deliberately.
+    restart: unless-stopped
+
+    # Gmail service account and mail addresses. Read when the container is
+    # created, so a change needs `docker compose up -d --force-recreate`.
+    env_file:
+      - .env.production
+
+    # The app listens on 3000 inside the container. On the host it takes 3001,
+    # since smartalliance-web already has 3000 on this server. Bound to the LAN
+    # address the central nginx proxies to (scripts/nginx/aceparts.conf), not to
+    # every interface.
+    ports:
+      - "172.22.22.201:3001:3000"
+
+    # Container logs filling the disk take the site down slowly. Cap them.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    stop_grace_period: 20s
