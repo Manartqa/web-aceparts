@@ -7,7 +7,7 @@ names and the host port differ.
 
 ```
 internet ──▶ FortiGate ──────────────▶ central nginx ─────────────▶ websmart 172.22.22.201:3001
-             public IP                  TLS (certificate here)        container aceparts-web
+             public IP                  TLS (certificate here)        container web-aceparts
              NAT 80/443, no TLS         :80 → 301 https               node server.js (:3000 inside)
                                         host-based routing
 ```
@@ -15,8 +15,8 @@ internet ──▶ FortiGate ──────────────▶ centr
 | | |
 |---|---|
 | App server | `websmart` — Ubuntu, `172.22.22.201`, SSH `smart` |
-| Deploy path | `/opt/docker/aceparts` (`compose.yaml` + `.env.production`) |
-| Container | `aceparts-web`, published on `172.22.22.201:3001` → `3000` inside |
+| Deploy path | `/opt/docker/web-aceparts` (`compose.yaml` + `.env.production`) |
+| Container | `web-aceparts`, published on `172.22.22.201:3001` → `3000` inside |
 | Neighbour | `smartalliance-web` on `172.22.22.201:3000` — not touched by anything here |
 | Central nginx | `172.22.22.170` — TLS, port 80 redirect, routing by host name. Site file: [scripts/nginx/aceparts.conf](scripts/nginx/aceparts.conf) |
 | FortiGate | Public IP; forwards 80 and 443 to the central nginx |
@@ -35,7 +35,7 @@ The most common way to misconfigure this app.
 | Variable | Where it is set | Changing it needs |
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_NOINDEX` | `deploy.ps1 -SiteUrl` / `-Staging` → `docker build --build-arg` | **A rebuild.** Baked into canonical tags, `sitemap.xml` and `robots.txt` by `next build`. Putting them in `.env.production` does nothing. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `/opt/docker/aceparts/.env.production` → `env_file:` in `compose.yaml` | **A new container**: `sudo docker compose up -d --force-recreate`. `restart` does not re-read the file. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `/opt/docker/web-aceparts/.env.production` → `env_file:` in `compose.yaml` | **A new container**: `sudo docker compose up -d --force-recreate`. `restart` does not re-read the file. |
 
 ---
 
@@ -111,7 +111,7 @@ sudo certbot certonly --webroot -w /var/www/letsencrypt -d aceparts.co.th -d www
 As `smart`. Drop `sudo` from `docker` commands if `smart` is in the `docker` group.
 
 ```bash
-sudo install -d -o smart -g smart -m 750 /opt/docker/aceparts
+sudo install -d -o smart -g smart -m 750 /opt/docker/web-aceparts
 ```
 
 Port 3001 is free (3000 belongs to `smartalliance-web`):
@@ -129,7 +129,7 @@ for u in https://oauth2.googleapis.com/token https://gmail.googleapis.com/; do c
 ### Runtime env file
 
 ```bash
-install -m 600 /dev/null /opt/docker/aceparts/.env.production && nano /opt/docker/aceparts/.env.production
+install -m 600 /dev/null /opt/docker/web-aceparts/.env.production && nano /opt/docker/web-aceparts/.env.production
 ```
 
 Contents (see `.env.example`). The same lines as a working `.env.local` can be
@@ -148,7 +148,7 @@ double quotes; without quotes the app does it instead. Either works.
 Names only, values never printed:
 
 ```bash
-sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' /opt/docker/aceparts/.env.production | sort
+sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' /opt/docker/web-aceparts/.env.production | sort
 ```
 
 The service account needs **domain-wide delegation** in the Google Workspace Admin
@@ -205,7 +205,7 @@ Docker Desktop must be running. From the repository root, on the commit to ship:
 ```
 
 Runs lint and the Playwright suite, builds the image for
-`https://aceparts.co.th`, and writes `aceparts-web.tar` (about 105 MB, ignored by
+`https://aceparts.co.th`, and writes `web-aceparts.tar` (about 105 MB, ignored by
 git). For a staging address, which must not be indexed:
 
 ```powershell
@@ -215,7 +215,7 @@ git). For a staging address, which must not be indexed:
 ### 2. Upload
 
 ```powershell
-scp .\aceparts-web.tar .\compose.yaml smart@172.22.22.201:/opt/docker/aceparts/
+scp .\web-aceparts.tar .\compose.yaml smart@172.22.22.201:/opt/docker/web-aceparts/
 ```
 
 `compose.yaml` only needs copying the first time and when it changes.
@@ -223,21 +223,21 @@ scp .\aceparts-web.tar .\compose.yaml smart@172.22.22.201:/opt/docker/aceparts/
 ### 3. Load and start (on `websmart`)
 
 ```bash
-cd /opt/docker/aceparts
+cd /opt/docker/web-aceparts
 ```
 
 Tag the running image first so there is something to roll back to (skip on the
 first deploy):
 
 ```bash
-sudo docker tag aceparts-web:latest aceparts-web:previous
+sudo docker tag web-aceparts:latest web-aceparts:previous
 ```
 
 ```bash
-sudo docker load -i aceparts-web.tar && rm aceparts-web.tar
+sudo docker load -i web-aceparts.tar && rm web-aceparts.tar
 ```
 
-Should print `Loaded image: aceparts-web:latest`.
+Should print `Loaded image: web-aceparts:latest`.
 
 ```bash
 sudo docker compose config --quiet && sudo docker compose up -d --force-recreate
@@ -250,7 +250,7 @@ seconds:
 sudo docker compose ps
 ```
 
-`aceparts-web` should be `Up … (healthy)`, ports `172.22.22.201:3001->3000/tcp`.
+`web-aceparts` should be `Up … (healthy)`, ports `172.22.22.201:3001->3000/tcp`.
 
 ### 4. Verify
 
@@ -316,7 +316,7 @@ public IP. A private address means FortiGate source-NATs; see
 After a day or two without problems:
 
 ```bash
-sudo docker rmi aceparts-web:previous && sudo docker image prune -f
+sudo docker rmi web-aceparts:previous && sudo docker image prune -f
 ```
 
 ## Rollback
@@ -324,7 +324,7 @@ sudo docker rmi aceparts-web:previous && sudo docker image prune -f
 A release, while the `:previous` tag exists:
 
 ```bash
-cd /opt/docker/aceparts && sudo docker tag aceparts-web:previous aceparts-web:latest && sudo docker compose up -d --force-recreate
+cd /opt/docker/web-aceparts && sudo docker tag web-aceparts:previous web-aceparts:latest && sudo docker compose up -d --force-recreate
 ```
 
 The whole site back to WordPress: point DNS back at the WordPress host (see the
@@ -338,12 +338,12 @@ sudo rm /etc/nginx/sites-enabled/aceparts.conf && sudo nginx -t && sudo systemct
 On `websmart`:
 
 ```bash
-cd /opt/docker/aceparts && sudo docker compose stop
+cd /opt/docker/web-aceparts && sudo docker compose stop
 ```
 
 ## Operating
 
-On `websmart`, from `/opt/docker/aceparts`:
+On `websmart`, from `/opt/docker/web-aceparts`:
 
 | | |
 |---|---|
@@ -352,8 +352,8 @@ On `websmart`, from `/opt/docker/aceparts`:
 | Restart (same container, same env) | `sudo docker compose restart` |
 | Apply an `.env.production` change | `sudo docker compose up -d --force-recreate` |
 | Stop / start | `sudo docker compose stop` / `sudo docker compose start` |
-| Health detail | `sudo docker inspect aceparts-web --format '{{json .State.Health}}'` |
-| Resource use | `sudo docker stats --no-stream aceparts-web` |
+| Health detail | `sudo docker inspect web-aceparts --format '{{json .State.Health}}'` |
+| Resource use | `sudo docker stats --no-stream web-aceparts` |
 | Clean old images | `sudo docker image prune -f` |
 
 On the central nginx host:

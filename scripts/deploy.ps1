@@ -35,7 +35,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$name  = 'aceparts-web'
+$name  = 'web-aceparts'
 $image = "${name}:latest"
 $root  = Split-Path $PSScriptRoot -Parent
 $tar   = Join-Path $root "$name.tar"
@@ -62,9 +62,9 @@ try {
     Write-Host "  $tar ($mb MB)"
 
     Write-Host "`nBuilt. Copy it up and swap the container (env check, verify, rollback: DEPLOYMENT.md):" -ForegroundColor Green
-    Write-Host "  scp .\$name.tar smart@172.22.22.201:/opt/docker/aceparts/"
+    Write-Host "  scp .\$name.tar smart@172.22.22.201:/opt/docker/web-aceparts/"
     Write-Host "  ssh smart@172.22.22.201"
-    Write-Host "  cd /opt/docker/aceparts"
+    Write-Host "  cd /opt/docker/web-aceparts"
     Write-Host "  sudo docker tag $image ${name}:previous"
     Write-Host "  sudo docker load -i $name.tar && rm $name.tar"
     Write-Host "  sudo docker compose up -d --force-recreate"

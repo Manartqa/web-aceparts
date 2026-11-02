@@ -4,8 +4,8 @@ services:
     # the server with `docker load`. No `build:` block on purpose: the server
     # holds no source code, and NEXT_PUBLIC_* are baked in at build time
     # (DEPLOYMENT.md, "Build-time vs runtime").
-    image: aceparts-web:latest
-    container_name: aceparts-web
+    image: web-aceparts:latest
+    container_name: web-aceparts
 
     # Back after a crash and after a reboot; stays down if stopped deliberately.
     restart: unless-stopped
