@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ContactList } from "@/components/common";
-import { company, services } from "@/content";
+import { company, products, services } from "@/content";
 
 export default function SiteFooter() {
   return (
     <footer className="bg-brand-deep text-white/70">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
         <div>
           <Image src="/images/logo.png" alt={company.name} width={128} height={102} className="h-20 w-auto" />
           <p className="mt-6 max-w-sm leading-relaxed">{company.statement}</p>
@@ -19,18 +19,8 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div>
-          <h2 className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-white">Services</h2>
-          <ul className="mt-5 space-y-3 text-sm">
-            {services.map((service) => (
-              <li key={service.href}>
-                <Link href={service.href} className="transition-colors hover:text-accent">
-                  {service.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <FooterLinks title="Products" links={products} />
+        <FooterLinks title="Services" links={services} />
       </div>
 
       <div className="border-t border-white/10">
@@ -39,6 +29,24 @@ export default function SiteFooter() {
         </p>
       </div>
     </footer>
+  );
+}
+
+function FooterLinks({ title, links }: { title: string; links: { name: string; href: string }[] }) {
+  return (
+    <div>
+      <h2 className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-white">{title}</h2>
+      <ul className="mt-4 space-y-1 text-sm">
+        {links.map((link) => (
+          <li key={link.href}>
+            {/* py-1.5 makes each link a 32 px tap target. */}
+            <Link href={link.href} className="block py-1.5 transition-colors hover:text-accent">
+              {link.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

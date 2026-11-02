@@ -23,7 +23,8 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
           return (
             <li key={`${crumb.label}-${i}`} className="flex items-center gap-2">
               {crumb.href && !last ? (
-                <Link href={crumb.href} className="transition-colors hover:text-accent">
+                // Padding offset by negative margin: a taller tap target, same layout.
+                <Link href={crumb.href} className="-my-2 inline-block py-2 transition-colors hover:text-accent">
                   {crumb.label}
                 </Link>
               ) : (

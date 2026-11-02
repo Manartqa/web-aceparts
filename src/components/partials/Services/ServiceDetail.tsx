@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ContactList, CtaBanner, PageHero } from "@/components/common";
+import { ContactList, CtaBanner, PageHero, QuoteLink } from "@/components/common";
 import { services, servicesPage, type Service } from "@/content";
 
 interface ServiceDetailProps {
@@ -57,8 +57,10 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <Image src={service.photo} alt={service.name} fill sizes="192px" className="object-cover" />
               </div>
               <div>
-                <h2 className="font-display text-3xl font-bold text-ink">{service.name}</h2>
+                {/* Not a heading: it repeats the page's h1. */}
+                <p className="font-display text-3xl font-bold text-ink">{service.name}</p>
                 <p className="mt-3 text-lg leading-relaxed">{service.description}</p>
+                <QuoteLink />
               </div>
             </div>
           </article>

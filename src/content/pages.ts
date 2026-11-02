@@ -1,6 +1,10 @@
 // Copy for /about-us/, /our-client/ and /contact-us/, ported from the WordPress site.
+import { company } from "./site";
 
 export const aboutPage = {
+  metaTitle: "About Us: Railway Parts Supplier Since 2012",
+  metaDescription:
+    "Founded in 2012, A.C.E. Parts supplies railway parts and maintenance services to the State Railway of Thailand, working with manufacturers in Korea.",
   tagline: "A.C.E. Parts Co., Ltd. - keeping Thailand's trains running since 2012",
   eyebrow: "About us",
   title: "A.C.E. Parts Co., Ltd.",
@@ -29,16 +33,21 @@ export const aboutPage = {
 };
 
 export const clientPage = {
+  metaTitle: "Our Client: State Railway of Thailand",
+  metaDescription:
+    "A.C.E. Parts supplies railway parts and maintenance services to one client, the State Railway of Thailand (SRT), the country's state-owned rail operator.",
   tagline: "The State Railway of Thailand (SRT) - our exclusive client serving Thailand's rail transport",
   eyebrow: "Our client",
   // The WordPress heading was a theme placeholder ("Successful Concept & Ideas").
   title: "State Railway of Thailand",
   // NEEDS REVIEW: "Founded in 1980" is copied as-is; check the date with A.C.E.
-  body: "A.C.E. Parts Co., Ltd.'s sole client is the State Railway of Thailand (SRT). Founded in 1980, the SRT is Thailand's state-owned rail operator serving millions of passengers each year. The SRT operates national services on the Northern, Northeastern, Eastern, and Southern lines. It also operates international services to Butterworth in Penang, Malaysia and Thanaleng Railway Station in Vientiane, Lao.",
+  body: "A.C.E. Parts Co., Ltd.'s sole client is the State Railway of Thailand (SRT). Founded in 1980, the SRT is Thailand's state-owned rail operator serving millions of passengers each year. The SRT operates national services on the Northern, Northeastern, Eastern, and Southern lines. It also operates international services to Butterworth in Penang, Malaysia and Thanaleng Railway Station in Vientiane, Laos.",
   image: "/images/client/srt.jpg",
 };
 
 export const contactPage = {
+  metaTitle: "Contact Us: Bangkok Office",
+  metaDescription: `Contact A.C.E. Parts at 599/59 Ratchadaphisek Road, Bangkok. Call ${company.phone} or send an enquiry; we answer within 24 hours on business days.`,
   eyebrow: "A.C.E. Parts Co., Ltd.",
   title: "Contact Us",
   formTitle: "Get in Touch",

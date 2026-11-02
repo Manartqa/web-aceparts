@@ -25,9 +25,15 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/portfolio-category/products/", destination: "/products/", permanent: true },
+      // The WordPress portfolio index; only /portfolio/<slug>/ exists here.
+      { source: "/portfolio/", destination: "/products/", permanent: true },
+      // WordPress sitemaps that Search Console may still have submitted.
+      { source: "/wp-sitemap.xml", destination: "/sitemap.xml", permanent: true },
+      { source: "/wp-sitemap-:file", destination: "/sitemap.xml", permanent: true },
       ...wordpressDemoPaths.map((source) => ({ source, destination: "/", permanent: true })),
     ];
   },
+  poweredByHeader: false,
   /* config options here */
   // Self-contained server for the Docker image (see Dockerfile).
   output: "standalone",

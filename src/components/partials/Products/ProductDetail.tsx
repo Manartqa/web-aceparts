@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CtaBanner, PageHero, ProductCard, SectionHeading } from "@/components/common";
+import { CtaBanner, PageHero, ProductCard, QuoteLink, SectionHeading } from "@/components/common";
 import { getProduct, products, productsPage, type Product } from "@/content";
 
 interface ProductDetailProps {
@@ -27,6 +27,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <p className="max-w-3xl font-display text-2xl font-semibold leading-snug text-ink sm:text-3xl">
             {product.summary}
           </p>
+          <QuoteLink />
 
           {product.gallery.length > 0 && (
             <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

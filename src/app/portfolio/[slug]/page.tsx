@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/partials/Products";
-import { company, getProduct, products } from "@/content";
+import { getProduct, products } from "@/content";
 import { pageMetadata } from "@/lib/seo";
 
 // Every slug is prerendered below, so navigating here only waits for a static
@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: PageProps<"/portfolio/[slug]"
   const product = getProduct((await params).slug);
   if (!product) return {};
   return pageMetadata({
-    title: product.name,
-    description: `${product.summary}. Supplied by ${company.name}, the official provider of railway parts to the State Railway of Thailand.`,
+    title: product.metaTitle,
+    description: product.metaDescription,
     path: product.href,
     image: product.gallery[0] ?? product.image,
   });

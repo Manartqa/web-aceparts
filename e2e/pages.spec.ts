@@ -8,7 +8,8 @@ for (const path of pages) {
 
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
-    await expect(page).toHaveTitle(/A\.C\.E\. Parts Co\., Ltd\./);
+    // Titles carry the short brand; the full company name is too long for search snippets.
+    await expect(page).toHaveTitle(/A\.C\.E\. Parts/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", new RegExp(`${path}$`));
     expect(errors).toEqual([]);

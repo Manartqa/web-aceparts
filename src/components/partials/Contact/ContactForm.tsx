@@ -14,8 +14,9 @@ const fields = [
   { name: "subject", label: "Subject", type: "text", autoComplete: "off", wide: true },
 ] as const;
 
+// 16 px text: iOS Safari zooms into any smaller field on focus.
 const inputClass =
-  "mt-2 block w-full rounded-xl border bg-white px-4 py-3 font-normal text-ink outline-none transition focus:ring-4";
+  "mt-2 block w-full rounded-xl border bg-white px-4 py-3 text-base font-normal text-ink outline-none transition focus:ring-4";
 
 const initialState: ContactState = { status: "idle" };
 

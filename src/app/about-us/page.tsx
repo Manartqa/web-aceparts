@@ -3,8 +3,8 @@ import { aboutPage } from "@/content";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "About Us",
-  description: aboutPage.story[0],
+  title: aboutPage.metaTitle,
+  description: aboutPage.metaDescription,
   path: "/about-us/",
   image: aboutPage.storyImage,
 });

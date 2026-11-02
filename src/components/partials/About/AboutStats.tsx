@@ -1,7 +1,11 @@
 "use client";
 
+import { Josefin_Sans } from "next/font/google";
 import { useLayoutEffect, useRef } from "react";
 import { aboutPage } from "@/content";
+
+// The theme's counter font; only this page uses the light weight.
+const josefinLight = Josefin_Sans({ subsets: ["latin"], weight: "300" });
 
 // After the WordPress theme's counter widget: each number counts up from 0 once it
 // is fully in view, over 2 s with jQuery's "swing" easing.
@@ -15,12 +19,12 @@ export default function AboutStats() {
         {aboutPage.stats.map((stat) => (
           <div key={stat.label} className="text-center">
             {/* WordPress used #c2c2c2 (1.8:1); #949494 is the lightest gray that passes WCAG AA for large text. */}
-            <div className="font-preloader text-[42px] font-light leading-none text-[#949494]">
+            <div className={`${josefinLight.className} text-[42px] font-light leading-none text-[#949494]`}>
               [ <Counter value={stat.value} /> +]
             </div>
-            <h3 className="mt-2 font-display text-base font-semibold uppercase tracking-[1px] text-[#232323] md:text-lg">
+            <p className="mt-2 font-display text-base font-semibold uppercase tracking-[1px] text-[#232323] md:text-lg">
               {stat.label}
-            </h3>
+            </p>
           </div>
         ))}
       </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Josefin_Sans, Poppins, Raleway, Titillium_Web } from "next/font/google";
+import { Josefin_Sans, Raleway, Titillium_Web } from "next/font/google";
 import { Preloader, SiteFooter, SiteHeader } from "@/components/layout";
-import { company } from "@/content";
+import { company, homeMeta } from "@/content";
 import { defaultOpenGraph, noindex, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -13,30 +13,24 @@ const raleway = Raleway({
 const titillium = Titillium_Web({
   variable: "--font-titillium",
   subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
+  weight: ["400", "600", "700"],
 });
 
-// Home hero title only, as on the WordPress slider.
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: "500",
-});
-
-// Preloader percentage and About counters, as on the WordPress theme.
+// Preloader percentage, as on the WordPress theme. Fonts used on one page only
+// (Poppins in the home hero, the About counters) load there instead.
 const josefin = Josefin_Sans({
   variable: "--font-josefin",
   subsets: ["latin"],
-  weight: ["300", "400"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${company.name} – ${company.tagline}`,
-    template: `%s – ${company.name}`,
+    default: homeMeta.title,
+    template: `%s – ${company.shortName}`,
   },
-  description: company.statement,
+  description: homeMeta.description,
   openGraph: defaultOpenGraph,
   ...(noindex && { robots: { index: false, follow: false } }),
   twitter: { card: "summary_large_image" },
@@ -46,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${raleway.variable} ${titillium.variable} ${poppins.variable} ${josefin.variable} h-full antialiased`}
+      className={`${raleway.variable} ${titillium.variable} ${josefin.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Preloader />

@@ -56,7 +56,8 @@ password; to cut it off, delete the key or the delegation entry.
 
 ### nginx site
 
-`/etc/nginx/sites-available/aceparts-web`, symlinked into `sites-enabled`:
+`/etc/nginx/sites-available/aceparts-web`, symlinked into `sites-enabled`. This is
+the HTTP-only config for the first start; [TLS](#tls) replaces it:
 
 ```nginx
 server {
@@ -91,13 +92,67 @@ Only possible once DNS resolves to the VM:
 sudo certbot --nginx -d aceparts.co.th -d www.aceparts.co.th --redirect
 ```
 
-The canonical host is `https://aceparts.co.th` (no `www`), as on the WordPress
-site. Make `www` redirect to it so there is one address per page: in the `:443`
-server block certbot writes, add
+Then replace the site file with the final config below and reload nginx. It does
+three things the certbot edit does not:
+- **One canonical host.** The canonical host is `https://aceparts.co.th` (no
+  `www`), as on the WordPress site. Every other address reaches it in one 301:
+  `http://`, `http://www.` and `https://www.`.
+- **Security headers.** Next.js sends none.
+- **HTTP/2.**
 
 ```nginx
-if ($host = www.aceparts.co.th) { return 301 https://aceparts.co.th$request_uri; }
+# HTTP: straight to the canonical host. certbot answers its renewal challenge
+# here by itself.
+server {
+    listen 80;
+    server_name aceparts.co.th www.aceparts.co.th;
+    return 301 https://aceparts.co.th$request_uri;
+}
+
+# www over HTTPS: same, in one hop.
+server {
+    listen 443 ssl http2;
+    server_name www.aceparts.co.th;
+    ssl_certificate /etc/letsencrypt/live/aceparts.co.th/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/aceparts.co.th/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    return 301 https://aceparts.co.th$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name aceparts.co.th;
+    ssl_certificate /etc/letsencrypt/live/aceparts.co.th/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/aceparts.co.th/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Short HSTS until the switch is verified, then raise it (go-live checklist).
+    add_header Strict-Transport-Security "max-age=300" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # Overwrite, never append. See "nginx site" above.
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
 ```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+The app already gzips its responses, so nginx does not compress them again. There
+is no Content-Security-Policy yet. Next.js inline scripts would need nonces, so a
+CSP needs testing of its own before it goes in.
 
 Renewal is automatic; check it with `sudo certbot renew --dry-run`.
 
@@ -187,6 +242,22 @@ curl -s https://aceparts.co.th/sitemap.xml | grep -m2 '<loc>'
 
 Every `<loc>` must start with `https://aceparts.co.th`.
 
+```bash
+curl -sI https://aceparts.co.th/ | grep -iE 'strict-transport|x-content-type|x-frame|referrer-policy|x-powered-by'
+```
+
+Four security headers, and no `X-Powered-By`.
+
+```bash
+for u in http://aceparts.co.th/about-us/ http://www.aceparts.co.th/about-us/ https://www.aceparts.co.th/about-us/ https://aceparts.co.th/about-us https://aceparts.co.th/portfolio/ https://aceparts.co.th/wp-sitemap.xml; do printf '%s -> ' "$u"; curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "$u"; done
+```
+
+Each one is a single redirect:
+- **the three non-canonical hosts** → `301` to `https://aceparts.co.th/about-us/`
+- **`/about-us`** → `308` to `/about-us/`
+- **`/portfolio/`** → `308` to `/products/`
+- **`/wp-sitemap.xml`** → `308` to `/sitemap.xml`
+
 Mail settings are only used when a message is sent, so send one real enquiry
 through `/contact-us/` and confirm it arrives. A missing variable is named in `sudo docker logs aceparts-web`.
 
@@ -246,9 +317,15 @@ Switch:
 
 After:
 
-- [ ] Google Search Console: verify the domain (DNS TXT record), submit
-      `https://aceparts.co.th/sitemap.xml`, watch Pages → "Not found (404)" for a
-      few weeks.
+- [ ] Google Search Console: verify the domain (DNS TXT record), remove the old
+      `wp-sitemap.xml`, submit `https://aceparts.co.th/sitemap.xml`, watch Pages →
+      "Not found (404)" for a few weeks.
+- [ ] Bing Webmaster Tools: import the site from Search Console and submit the
+      sitemap (Bing also feeds ChatGPT search and Copilot).
+- [ ] Rich Results Test on `/` and one `/our-services/<slug>/` page: Organization,
+      WebSite, Service and BreadcrumbList with no errors.
+- [ ] After a week without HTTPS problems, raise HSTS in the nginx config to
+      `max-age=31536000` ([TLS](#tls)).
 - [ ] Restore the DNS TTL.
 - [ ] Shut down the WordPress hosting once the backup period ends.
 

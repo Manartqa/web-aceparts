@@ -1,6 +1,7 @@
 import { ContactList, PageHero, SectionHeading } from "@/components/common";
 import { company, contactPage } from "@/content";
 import ContactForm from "./ContactForm";
+import MapEmbed from "./MapEmbed";
 
 export default function ContactContent() {
   const { map } = contactPage;
@@ -29,13 +30,11 @@ export default function ContactContent() {
 
           <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-brand/10">
-              {/* Keyless Google Maps embed; lazy so it doesn't slow the page above it. */}
-              <iframe
+              {/* Keyless Google Maps embed, added only when scrolled near. */}
+              <MapEmbed
                 title={`${company.name} on Google Maps`}
                 src={map.embedUrl}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="block h-[360px] w-full border-0 lg:h-full lg:min-h-[360px]"
+                className="h-[360px] w-full lg:h-full lg:min-h-[360px]"
               />
             </div>
 

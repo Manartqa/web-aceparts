@@ -1,10 +1,10 @@
 import { ContactContent } from "@/components/partials/Contact";
-import { company, contactPage } from "@/content";
+import { contactPage } from "@/content";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Contact Us",
-  description: `${contactPage.detailsText} ${company.address}. Tel ${company.phone}.`,
+  title: contactPage.metaTitle,
+  description: contactPage.metaDescription,
   path: "/contact-us/",
 });
 

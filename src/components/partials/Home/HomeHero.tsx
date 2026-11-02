@@ -1,40 +1,61 @@
 "use client";
 
+import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { company, heroImages } from "@/content";
 
+// Hero title only, as on the WordPress slider; loaded here so other pages skip it.
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: "500",
+});
+
 // Long enough for the intro (title, tagline, frame lines: ~4 s) to settle.
 const SLIDE_MS = 8000;
+// The other slides sit in view behind the first, so lazy loading doesn't hold
+// them back; wait so they don't compete with the first slide and page scripts.
+const LATER_SLIDES_MS = 3000;
 
 const line = "absolute bg-white/30";
 
 export default function HomeHero() {
   const [current, setCurrent] = useState(0);
+  const [loadLater, setLoadLater] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setCurrent((i) => (i + 1) % heroImages.length), SLIDE_MS);
     return () => clearTimeout(timer);
   }, [current]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadLater(true), LATER_SLIDES_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <section className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-brand-deep text-center">
+    <section
+      className={`${poppins.variable} relative isolate flex min-h-[100svh] items-center overflow-hidden bg-brand-deep text-center`}
+    >
       {heroImages.map((src, i) => (
         <div
           key={src}
           className={`absolute inset-0 -z-20 transition-opacity duration-1000 ${i === current ? "opacity-100" : "opacity-0"}`}
           aria-hidden={i !== current}
         >
-          <Image
-            src={src}
-            alt=""
-            fill
-            loading={i === 0 ? "eager" : "lazy"}
-            fetchPriority={i === 0 ? "high" : "auto"}
-            sizes="100vw"
-            className={`object-cover ${i === current ? "hero-zoom animate-[hero-zoom_9s_ease-out_forwards]" : ""}`}
-          />
+          {(i === 0 || i === current || loadLater) && (
+            <Image
+              src={src}
+              alt=""
+              fill
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === 0 ? "high" : "auto"}
+              sizes="100vw"
+              className={`object-cover ${i === current ? "hero-zoom animate-[hero-zoom_9s_ease-out_forwards]" : ""}`}
+            />
+          )}
         </div>
       ))}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-deep/60 via-black/35 to-brand-deep/70" />

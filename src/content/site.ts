@@ -11,6 +11,8 @@ export interface NavItem {
 
 export const company = {
   name: "A.C.E. Parts Co., Ltd.",
+  // Brand in page titles; the full name is too long for search snippets.
+  shortName: "A.C.E. Parts",
   tagline: "Bogie frames, drive gears, wheelsets and more.",
   statement:
     "The official provider of railway parts and services to the State Railway of Thailand",
@@ -18,6 +20,13 @@ export const company = {
   phone: "+662-001-1155",
   email: "operations@acethailand.co.th",
   founded: 2012,
+};
+
+// Search snippet for the home page; inner pages keep theirs next to their copy.
+export const homeMeta = {
+  title: "A.C.E. Parts – Railway Parts and Maintenance in Thailand",
+  description:
+    "A.C.E. Parts supplies railway parts and maintenance services to the State Railway of Thailand: bogie frames, wheelsets, drive gears and more, since 2012.",
 };
 
 export const partners = [1, 2, 3, 4, 5, 6].map((n) => ({

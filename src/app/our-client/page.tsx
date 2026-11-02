@@ -3,8 +3,8 @@ import { clientPage } from "@/content";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Our Client",
-  description: clientPage.body,
+  title: clientPage.metaTitle,
+  description: clientPage.metaDescription,
   path: "/our-client/",
   image: clientPage.image,
 });
