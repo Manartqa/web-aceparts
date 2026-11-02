@@ -22,7 +22,7 @@ The most common way to misconfigure this app.
 | Variable | Where it is set | Changing it needs |
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_NOINDEX` | `deploy.ps1 -SiteUrl` / `-Staging` → `docker build --build-arg` | **A rebuild.** Baked into canonical tags, `sitemap.xml` and `robots.txt` by `next build`. Putting them in the env file does nothing. |
-| `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `~/aceparts-web.env` → `docker run --env-file` | **A new container** ([step 5](#5-swap-the-container)). `docker restart` does not re-read the file. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `MAIL_SENDER`, `CONTACT_MAIL_TO` | `~/aceparts-web.env` → `docker run --env-file` | **A new container** ([step 5](#5-swap-the-container)). `docker restart` does not re-read the file. |
 
 ---
 
@@ -40,17 +40,19 @@ install -m 600 /dev/null ~/aceparts-web.env && nano ~/aceparts-web.env
 Contents (see `.env.example`):
 
 ```
-MS_TENANT_ID=...
-MS_CLIENT_ID=...
-MS_CLIENT_SECRET=...
-MAIL_SENDER=operations@acethailand.co.th
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...@....iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n
+MAIL_SENDER=admin@acethailand.co.th
 CONTACT_MAIL_TO=operations@acethailand.co.th
 ```
 
-The Entra ID app needs the **Mail.Send** application permission with admin
-consent, in the tenant that owns `MAIL_SENDER`. Mail.Send lets the app send as
-*any* mailbox in the tenant; restrict it to `MAIL_SENDER` with an Exchange
-application access policy.
+`--env-file` takes each line as is: no quotes around the key, and keep its `\n`
+escapes on one line; the app turns them back into line breaks.
+
+The service account needs **domain-wide delegation** in the Google Workspace Admin
+console (Security → API controls) for `https://www.googleapis.com/auth/gmail.send`
+only. That lets it send as *any* user in the domain, so treat the key like a
+password; to cut it off, delete the key or the delegation entry.
 
 ### nginx site
 
@@ -186,8 +188,7 @@ curl -s https://aceparts.co.th/sitemap.xml | grep -m2 '<loc>'
 Every `<loc>` must start with `https://aceparts.co.th`.
 
 Mail settings are only used when a message is sent, so send one real enquiry
-through `/contact-us/` (wait at least 3 seconds before submitting) and confirm it
-arrives. A missing variable is named in `sudo docker logs aceparts-web`.
+through `/contact-us/` and confirm it arrives. A missing variable is named in `sudo docker logs aceparts-web`.
 
 ### 7. Clean up
 
@@ -230,7 +231,7 @@ Before the switch:
 - [ ] Deploy a **staging** build (`-Staging`) and have A.C.E. review every page.
 - [ ] Resolve the `NEEDS REVIEW` items in `src/content/pages.ts` (About statistics,
       the SRT founding year) with A.C.E.
-- [ ] Point the mail settings at A.C.E.'s own tenant and mailbox, and send a test
+- [ ] Point `CONTACT_MAIL_TO` at A.C.E.'s own mailbox, and send a test
       enquiry from staging.
 - [ ] Take a full backup of the WordPress site (files and database). Keep it for at
       least 30 days after the switch.

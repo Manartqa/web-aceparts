@@ -12,6 +12,7 @@
   --font-sans: var(--font-raleway);
   --font-display: var(--font-titillium);
   --font-hero: var(--font-poppins);
+  --font-preloader: var(--font-josefin);
 }
 
 html {

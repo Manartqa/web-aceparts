@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Poppins, Raleway, Titillium_Web } from "next/font/google";
-import { SiteFooter, SiteHeader } from "@/components/layout";
+import { Josefin_Sans, Poppins, Raleway, Titillium_Web } from "next/font/google";
+import { Preloader, SiteFooter, SiteHeader } from "@/components/layout";
 import { company } from "@/content";
 import { defaultOpenGraph, noindex, siteUrl } from "@/lib/seo";
 import "./globals.css";
@@ -23,6 +23,13 @@ const poppins = Poppins({
   weight: "500",
 });
 
+// Preloader percentage and About counters, as on the WordPress theme.
+const josefin = Josefin_Sans({
+  variable: "--font-josefin",
+  subsets: ["latin"],
+  weight: ["300", "400"],
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -39,9 +46,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${raleway.variable} ${titillium.variable} ${poppins.variable} h-full antialiased`}
+      className={`${raleway.variable} ${titillium.variable} ${poppins.variable} ${josefin.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Preloader />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

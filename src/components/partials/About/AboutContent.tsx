@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { CtaBanner, PageHero, SectionHeading } from "@/components/common";
 import { aboutPage } from "@/content";
+import AboutStats from "./AboutStats";
 
 export default function AboutContent() {
   const { vision } = aboutPage;
@@ -51,9 +52,9 @@ export default function AboutContent() {
         </div>
       </section>
 
-      <div className="pt-24">
-        <CtaBanner />
-      </div>
+      <AboutStats />
+
+      <CtaBanner />
     </>
   );
 }

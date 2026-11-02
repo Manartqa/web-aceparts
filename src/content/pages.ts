@@ -18,8 +18,8 @@ export const aboutPage = {
   },
   visionImage: "/images/about/vision.jpg",
   mission: "Our mission is to optimize the SRT's performance through our premium-grade products and high-quality services.",
-  // NEEDS REVIEW: these look like theme demo values (180 clients contradicts
-  // "our only customer"). Confirm with A.C.E. before showing them.
+  // Shown as on the WordPress site. NEEDS REVIEW: these look like theme demo
+  // values (180 clients contradicts "our only customer"); confirm with A.C.E.
   stats: [
     { value: 180, label: "Current Clients" },
     { value: 10, label: "Years of Experience" },

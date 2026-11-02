@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useLayoutEffect, useState } from "react";
 import { submitContact } from "@/app/contact-us/actions";
 import type { ContactField, ContactState } from "@/lib/contact";
 
@@ -20,13 +20,15 @@ const inputClass =
 const initialState: ContactState = { status: "idle" };
 
 export default function ContactForm({ title }: ContactFormProps) {
-  const [state, formAction, pending] = useActionState(submitContact, initialState);
-  const startedAt = useRef<HTMLInputElement>(null);
+  const [resetKey, setResetKey] = useState(0);
+  // Next keeps a page mounted but hidden after navigating away, which would keep
+  // the last result message. Start fresh on every visit, as the WordPress site did.
+  useLayoutEffect(() => () => setResetKey((key) => key + 1), []);
+  return <Form key={resetKey} title={title} />;
+}
 
-  // Records when the visitor started, for the server's minimum-fill-time check.
-  useEffect(() => {
-    if (startedAt.current) startedAt.current.value = String(Date.now());
-  }, []);
+function Form({ title }: ContactFormProps) {
+  const [state, formAction, pending] = useActionState(submitContact, initialState);
 
   const notice =
     state.status === "success"
@@ -73,14 +75,25 @@ export default function ContactForm({ title }: ContactFormProps) {
         </label>
       </div>
 
-      {/* Anti-spam: hidden from people, filled in by bots. */}
+      {/* Anti-spam: hidden from people, filled in by bots. The name and label mean
+          nothing to autofill, and the data-* attributes tell password managers
+          (1Password, LastPass, Bitwarden, Dashlane) to skip it; a field named
+          "website" got autofilled and real messages were dropped. */}
       <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label>
-          Website
-          <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+          Leave this field empty
+          <input
+            name="hp"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            data-form-type="other"
+          />
         </label>
       </div>
-      <input ref={startedAt} name="startedAt" type="hidden" />
 
       <button
         type="submit"

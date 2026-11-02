@@ -74,13 +74,14 @@ so adding an entry there adds the page.
 ## Contact form
 
 `/contact-us/` submits to a Server Action (`src/app/contact-us/actions.ts`) that sends
-the enquiry with Microsoft Graph `sendMail`, using an Entra ID app with the `Mail.Send`
-application permission. Copy `.env.example` to `.env.local` and fill in the values;
+the enquiry with the Gmail API as a Google Workspace user (`MAIL_SENDER`), using a
+service account with domain-wide delegation for the `gmail.send` scope only. Copy
+`.env.example` to `.env.local` and fill in the values;
 the same variables must be set on the host. Without them the form shows a fallback
 message with the company email and phone.
 
-Spam protection: a hidden honeypot field, a 3-second minimum fill time and an in-memory
-limit of 5 messages per IP per 10 minutes.
+Spam protection: a hidden honeypot field and an in-memory limit of 5 messages per IP
+per 10 minutes. Dropped messages are logged with the reason.
 
 ## URLs
 

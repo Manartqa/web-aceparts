@@ -68,13 +68,18 @@ export default function SiteHeader() {
                     )}
                   </Link>
                   {item.children && (
-                    <div className="invisible absolute left-1/2 top-full w-72 -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition-all duration-200 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                    <div className="invisible absolute left-1/2 top-full w-[22rem] -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition-all duration-200 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                       <ul className="overflow-hidden rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5">
                         {item.children.map((child) => (
                           <li key={child.href}>
+                            {/* A line slides in and pushes the text right, as on the WordPress menu. */}
                             <Link
                               href={child.href}
-                              className="block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-brand-soft hover:text-brand"
+                              className={`relative block rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-linear before:absolute before:left-4 before:top-1/2 before:h-px before:bg-current before:transition-all before:duration-300 before:ease-linear hover:bg-brand-soft hover:pl-14 hover:text-brand hover:before:w-[30px] hover:before:opacity-100 ${
+                                child.href === pathname
+                                  ? "pl-14 text-brand before:w-[30px] before:opacity-100"
+                                  : "text-ink before:w-0 before:opacity-0"
+                              }`}
                             >
                               {child.label}
                             </Link>

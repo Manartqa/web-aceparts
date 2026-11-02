@@ -3,12 +3,11 @@
 import { headers } from "next/headers";
 import { company } from "@/content";
 import { validateContact, type ContactState, type ContactValues } from "@/lib/contact";
-import { readMailConfig, sendMail } from "@/lib/mail/graph";
+import { readMailConfig, sendMail } from "@/lib/mail/gmail";
 
-// Anti-spam: a hidden honeypot field, a minimum fill time, and a per-IP rate
-// limit. The rate limit is in memory, so it resets on restart and is per
-// instance; good enough for a low-traffic contact form.
-const MIN_FILL_MS = 3_000;
+// Anti-spam: a hidden honeypot field and a per-IP rate limit. The rate limit is
+// in memory, so it resets on restart and is per instance; good enough for a
+// low-traffic contact form.
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 10 * 60_000;
 const recent = new Map<string, number[]>();
@@ -35,19 +34,15 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
     message: field("message"),
   };
 
-  // Bots fill the hidden field; pretend it worked.
-  if (field("website")) return { status: "success" };
+  // Bots fill the hidden field; pretend it worked. Logged, since browser autofill
+  // can fill it too and the visitor then sees "Thank you" for a dropped message.
+  if (field("hp")) {
+    console.warn("Contact form: dropped as spam, hidden field was filled");
+    return { status: "success" };
+  }
 
-  // Validate before the timing check, so a person who submits an incomplete
-  // form quickly sees the errors instead of a fake "Thank you".
   const errors = validateContact(values);
   if (errors) return { status: "error", message: "Please check the highlighted fields.", errors, values };
-
-  // A complete form submitted within seconds of loading is a bot; pretend it worked.
-  // startedAt is set by the browser on mount, so it is empty without JS; that
-  // case is let through rather than silently dropping a real message.
-  const startedAt = Number(field("startedAt"));
-  if (startedAt && Date.now() - startedAt < MIN_FILL_MS) return { status: "success" };
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (rateLimited(ip)) {
