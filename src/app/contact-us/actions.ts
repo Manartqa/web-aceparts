@@ -11,15 +11,29 @@ import { readMailConfig, sendMail } from "@/lib/mail/gmail";
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 10 * 60_000;
 const recent = new Map<string, number[]>();
+let lastSweep = 0;
 
 const unavailable = `Sorry, your message could not be sent. Please email ${company.email} or call ${company.phone}.`;
 
 function rateLimited(ip: string): boolean {
   const now = Date.now();
+  // Drop addresses with no hit in the window, at most once per window, so the
+  // map holds only recent senders instead of every address ever seen.
+  if (now - lastSweep >= RATE_WINDOW_MS) {
+    for (const [key, times] of recent) {
+      if (now - times[times.length - 1] >= RATE_WINDOW_MS) recent.delete(key);
+    }
+    lastSweep = now;
+  }
   const hits = (recent.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  // Blocked attempts are not recorded, so one address holds at most RATE_LIMIT entries.
+  if (hits.length >= RATE_LIMIT) {
+    recent.set(ip, hits);
+    return true;
+  }
   hits.push(now);
   recent.set(ip, hits);
-  return hits.length > RATE_LIMIT;
+  return false;
 }
 
 const escapeHtml = (s: string) =>
